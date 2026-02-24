@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aircraft Combat Game</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { background: skyblue; display: block; margin: 0 auto; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const player = { x: canvas.width / 2, y: canvas.height / 2, width: 50, height: 50, color: 'green', speed: 5 };
+        const obstacles = [];
+        const enemies = [];
+        let score = 0;
+        let level = 1;
+
+        function spawnEnemy() {
+            enemies.push({ x: Math.random() * canvas.width, y: -50, width: 40, height: 40, speed: 3 + level });
+        }
+
+        function spawnObstacle() {
+            obstacles.push({ x: Math.random() * canvas.width, y: canvas.height, width: 20, height: 20, speed: 2 });
+        }
+
+        function update() {
+            player.y -= player.speed;
+            if (Math.random() < 0.02 * level) spawnEnemy();
+            if (Math.random() < 0.03) spawnObstacle();  
+
+            if (obstacles.length) {
+                for (let i = 0; i < obstacles.length; i++) {
+                    obstacles[i].y -= obstacles[i].speed;
+                    if (obstacles[i].y < 0) obstacles.splice(i, 1);
+                }
+            }
+
+            if (enemies.length) {
+                for (let i = 0; i < enemies.length; i++) {
+                    enemies[i].y += enemies[i].speed;
+                    if (enemies[i].y > canvas.height) {
+                        enemies.splice(i, 1);
+                        score += 10;
+                    }
+                }
+            }
+
+            detectCollisions();
+        }
+
+        function detectCollisions() {
+            enemies.forEach((enemy, index) => {
+                if (player.x < enemy.x + enemy.width &&  
+                    player.x + player.width > enemy.x && 
+                    player.y < enemy.y + enemy.height && 
+                    player.height + player.y > enemy.y) {
+                    alert('Game Over! Your Score: ' + score);
+                    document.location.reload();
+                }
+            });
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            
+            obstacles.forEach(obstacle => {
+                ctx.fillStyle = 'red';
+                ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+            });
+
+            enemies.forEach(enemy => {
+                ctx.fillStyle = 'black';
+                ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+            });
+
+            ctx.fillStyle = 'black';
+            ctx.font = '20px Arial';
+            ctx.fillText('Score: ' + score, 10, 20);
+            ctx.fillText('Level: ' + level, 10, 40);
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function controlPlayer(event) {
+            switch (event.key) {
+                case 'ArrowUp': player.y -= player.speed; break;
+                case 'ArrowDown': player.y += player.speed; break;
+                case 'ArrowLeft': player.x -= player.speed; break;
+                case 'ArrowRight': player.x += player.speed; break;
+            }
+        }
+
+        window.addEventListener('keydown', controlPlayer);
+        gameLoop();
+    </script>
+</body>
+</html>
